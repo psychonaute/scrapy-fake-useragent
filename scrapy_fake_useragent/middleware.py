@@ -63,8 +63,12 @@ class RandomUserAgentMiddleware(RandomUserAgentBase):
                              % (self._proxy2ua[proxy], proxy))
 
             request.headers.setdefault('User-Agent', self._proxy2ua[proxy])
+            if 'splash' in request.meta:
+                request.meta['splash']['args']['ua'] = self._proxy2ua[proxy]
         else:
             request.headers.setdefault('User-Agent', self._ua_provider.get_random_ua())
+            if 'splash' in request.meta:
+                request.meta['splash']['args']['ua'] = self._ua_provider.get_random_ua()
 
 
 class RetryUserAgentMiddleware(RetryMiddleware, RandomUserAgentBase):
@@ -87,6 +91,8 @@ class RetryUserAgentMiddleware(RetryMiddleware, RandomUserAgentBase):
         if response.status in self.retry_http_codes:
             reason = response_status_message(response.status)
             request.headers['User-Agent'] = self._ua_provider.get_random_ua()
+            if 'splash' in request.meta:
+                request.meta['splash']['args']['ua'] = self._ua_provider.get_random_ua()
             return self._retry(request, reason, spider) or response
 
         return response
@@ -95,5 +101,7 @@ class RetryUserAgentMiddleware(RetryMiddleware, RandomUserAgentBase):
         if isinstance(exception, self.EXCEPTIONS_TO_RETRY) \
                 and not request.meta.get('dont_retry', False):
             request.headers['User-Agent'] = self._ua_provider.get_random_ua()
+            if 'splash' in request.meta:
+                request.meta['splash']['args']['ua'] = self._ua_provider.get_random_ua()
 
             return self._retry(request, exception, spider)
